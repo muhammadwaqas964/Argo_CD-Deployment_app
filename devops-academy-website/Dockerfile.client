@@ -1,0 +1,43 @@
+# Dockerfile.server - Combined Backend & Frontend Image
+
+# Stage 1: Build the application
+FROM oven/bun:1.1.18-alpine AS builder
+WORKDIR /app
+
+# Copy lockfiles first for caching
+COPY package.json bun.lock ./
+
+# Install dependencies (including devDependencies)
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
+
+# Copy the full source code
+COPY . .
+
+# Build backend (TypeScript)
+RUN bun run build
+
+# Build frontend (Vite)
+WORKDIR /app/client
+RUN bunx vite build
+
+# Stage 2: Production image
+FROM node:20-alpine
+WORKDIR /app
+
+# Copy only production dependencies
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy compiled backend (includes server/index.js and routes)
+COPY --from=builder /app/dist ./dist
+
+# Copy frontend static files into public dir
+COPY --from=builder /app/dist/server/public ./dist/server/public
+
+# Copy package.json (optional but useful)
+COPY package.json ./
+
+# Expose the backend port
+EXPOSE 5000
+
+# Start backend server
+CMD ["node", "dist/server/index.js"]
