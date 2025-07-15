@@ -17,7 +17,8 @@ spec:
         image: muhammadwaqas366/devops-client:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 3000
-        env: # <--- ADD THIS SECTION
-          - name: REACT_APP_BACKEND_URL # This name is common for React apps
-            value: "http://backend-service:80" # <-- This is the internal K8s service URL
+        - containerPort: 80 # <--- CHANGE THIS TO 80 (Nginx port)
+        # Remove the entire 'env' section below, it's no longer needed for runtime
+        # env:
+        #   - name: REACT_APP_BACKEND_URL
+        #     value: "http://backend-service:80"
