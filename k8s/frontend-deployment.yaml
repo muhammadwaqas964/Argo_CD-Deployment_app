@@ -18,3 +18,6 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
+        env: # <--- ADD THIS SECTION
+          - name: REACT_APP_BACKEND_URL # This name is common for React apps
+            value: "http://backend-service:80" # <-- This is the internal K8s service URL
