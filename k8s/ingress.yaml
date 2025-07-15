@@ -1,28 +1,27 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: backend-ingress # You can also name it devops-ingress for clarity if you wish
-  namespace: devops-k8s # Explicitly define the namespace for clarity
+  name: backend-ingress
+  namespace: devops-k8s
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true" # <--- ADD THIS ANNOTATION
 spec:
-  ingressClassName: nginx # This is confirmed to be correct!
+  ingressClassName: nginx
   rules:
     - host: devops.local
       http:
         paths:
-          # Rule for the Backend API
-          - path: /api(/|$)(.*) # This regex matches /api, /api/, and /api/anything
-            pathType: Prefix
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific # <--- CHANGE THIS FROM Prefix
             backend:
               service:
                 name: backend-service
                 port:
-                  number: 80 # This is the port your backend-service exposes
-
-          # Rule for the Frontend Application (catch-all for all other paths)
-          - path: /(.*) # This matches all other paths (e.g., /, /login, /about)
-            pathType: Prefix
+                  number: 80
+          - path: /(.*)
+            pathType: ImplementationSpecific # <--- CHANGE THIS FROM Prefix
             backend:
               service:
                 name: frontend-service
                 port:
-                  number: 80 # This is the port your frontend-service exposes
+                  number: 80
