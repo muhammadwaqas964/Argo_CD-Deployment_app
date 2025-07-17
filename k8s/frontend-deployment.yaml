@@ -18,7 +18,3 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 80 # <--- CHANGE THIS TO 80 (Nginx port)
-        # Remove the entire 'env' section below, it's no longer needed for runtime
-        # env:
-        #   - name: REACT_APP_BACKEND_URL
-        #     value: "http://backend-service:80"
