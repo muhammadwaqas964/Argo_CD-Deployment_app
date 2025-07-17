@@ -1,0 +1,21 @@
+# devops-academy-website/Dockerfile.frontend
+
+# Stage 1: (Implicitly, you build your frontend locally first using 'npm run build')
+# This Dockerfile only handles serving the *already built* static files.
+
+# Stage 2: Serve the built static files with Nginx
+FROM nginx:alpine
+
+# Remove the default Nginx configuration
+RUN rm /etc/nginx/conf.d/default.conf
+# Copy your custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy the static files from your local 'dist/public' folder into Nginx's serving directory
+# IMPORTANT: This assumes you run 'npm run build' locally *before* building this Docker image.
+COPY dist/public /usr/share/nginx/html
+
+# Nginx default HTTP port
+EXPOSE 80 
+# Command to start Nginx
+CMD ["nginx", "-g", "daemon off;"]

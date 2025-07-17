@@ -1,0 +1,19 @@
+# devops-academy-website/Dockerfile.backend
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package.json ./
+COPY package-lock.json ./
+
+# Install only production dependencies
+RUN npm install --production
+
+# Copy the compiled backend code
+COPY dist/. ./dist
+
+# Assuming your Express backend listens on port 5000 (confirmed as 5000)
+EXPOSE 5000
+# This command runs your compiled backend
+CMD ["node", "dist/index.js"]
