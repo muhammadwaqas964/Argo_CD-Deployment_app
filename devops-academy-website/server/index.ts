@@ -1,10 +1,15 @@
-// server/index.ts - FINAL CORRECTED VERSION
 import express, { type Request, Response, NextFunction } from "express";
-import { createServer, type Server } from "http";
-import { registerRoutes } from "./routes.js";
-import { serveStatic, log } from "./vite.js";
+import { registerRoutes } from "./routes.js"; // make sure .js is used in ESM when importing built code
+import { setupVite, serveStatic, log } from "./vite.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// ESM-compatible __dirname replacement
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -39,7 +44,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // All routes are registered here
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -50,18 +54,10 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Serve Vite assets in development, or static build in production
   if (app.get("env") === "development") {
-    const { setupVite } = await import("./vite.js");
     await setupVite(app, server);
   } else {
-    // In production, serve the built client static files
-    serveStatic(app); // <--- THIS LINE MUST BE UNCOMMENTED
-    // Remove the following two lines which were for debugging (if they exist):
-    // log("Running in production mode, but static serving is disabled for debugging.");
-    // app.use('/', (req, res) => {
-    //    res.status(200).send('Server is running (static serving disabled for debug).');
-    // });
+    serveStatic(app);
   }
 
   const port = 5000;
@@ -73,6 +69,6 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
-    },
+    }
   );
 })();

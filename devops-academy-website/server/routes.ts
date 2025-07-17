@@ -1,22 +1,15 @@
-// server/routes.ts - FULLY UNCOMMENTED AND CORRECTED VERSION
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage.js";
+import { storage } from "./storage.js"; // ESM requires .js extension
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-
-  // Health check endpoint
-  app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
-  });
-
   // Get all learning paths
-  app.get("/api/learning-paths", async (req, res) => {
+  app.get("/api/learning-paths", async (_req, res) => {
     try {
       const paths = await storage.getAllLearningPaths();
       res.json(paths);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch learning paths" });
     }
   });
@@ -28,38 +21,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
 
       const path = await storage.getLearningPathWithTopics(id, userId);
-      if (!path) {
-        return res.status(404).json({ message: "Learning path not found" });
-      }
+      if (!path) return res.status(404).json({ message: "Learning path not found" });
 
       res.json(path);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch learning path" });
     }
   });
 
   // Get all topics
-  app.get("/api/topics", async (req, res) => {
+  app.get("/api/topics", async (_req, res) => {
     try {
       const topics = await storage.getAllTopics();
       res.json(topics);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch topics" });
     }
   });
 
-  // 👇 IMPORTANT FIX: Move specific static route BEFORE dynamic route
   // Search topics
   app.get("/api/topics/search", async (req, res) => {
     try {
       const query = req.query.q as string;
-      if (!query) {
-        return res.status(400).json({ message: "Search query is required" });
-      }
+      if (!query) return res.status(400).json({ message: "Search query is required" });
 
       const topics = await storage.searchTopics(query);
       res.json(topics);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to search topics" });
     }
   });
@@ -71,12 +59,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
 
       const topic = await storage.getTopicBySlug(slug, userId);
-      if (!topic) {
-        return res.status(404).json({ message: "Topic not found" });
-      }
+      if (!topic) return res.status(404).json({ message: "Topic not found" });
 
       res.json(topic);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch topic" });
     }
   });
@@ -97,7 +83,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(progress);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid progress data", errors: error.errors });
+        return res.status(400).json({
+          message: "Invalid progress data",
+          errors: error.errors,
+        });
       }
       res.status(500).json({ message: "Failed to update progress" });
     }
@@ -111,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const progress = await storage.getUserProgressByPath(userId, pathId);
       res.json(progress);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch user progress" });
     }
   });
@@ -122,11 +111,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const topicId = parseInt(req.params.topicId);
       const snippets = await storage.getCodeSnippetsByTopic(topicId);
       res.json(snippets);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch code snippets" });
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
+  return createServer(app);
 }

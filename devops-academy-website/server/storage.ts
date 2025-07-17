@@ -1,10 +1,10 @@
-import {
+import { 
   users, learningPaths, topics, userProgress, codeSnippets,
   type User, type InsertUser, type LearningPath, type InsertLearningPath,
   type Topic, type InsertTopic, type UserProgress, type InsertUserProgress,
   type CodeSnippet, type InsertCodeSnippet, type LearningPathWithTopics,
   type TopicWithProgress
-} from "../shared/schema.js"; // KEEPING THIS RELATIVE PATH FOR NOW
+} from "@shared/schema";
 
 export interface IStorage {
   // Users
@@ -87,13 +87,9 @@ export class MemStorage implements IStorage {
     this.learningPaths.set(advancedPath.id, advancedPath);
 
     // Seed topics
-    const topicsData: (Omit<Topic, 'id' | 'learnerCount' | 'tags' | 'prerequisites'> & {
-        id?: number; // Make id optional for initial creation
-        learnerCount?: number;
-        tags?: string[];
-        prerequisites?: string[];
-      })[] = [
+    const topics = [
       {
+        id: this.getNextId(),
         title: "DevOps Fundamentals",
         slug: "devops-fundamentals",
         description: "Understanding the core principles and culture of DevOps",
@@ -133,7 +129,7 @@ Continuous monitoring of applications and infrastructure to provide rapid feedba
         icon: "fas fa-infinity",
         level: "beginner",
         readTime: 30,
-        learnerCount: 5420, // Explicitly set
+        learnerCount: 5420,
         learningPathId: beginnerPath.id,
         order: 1,
         objectives: [
@@ -142,10 +138,11 @@ Continuous monitoring of applications and infrastructure to provide rapid feedba
           "Recognize the benefits of DevOps practices",
           "Identify key tools and technologies"
         ],
-        tags: ["devops", "fundamentals", "culture", "principles"], // Explicitly set
-        prerequisites: [], // Explicitly set
+        tags: ["devops", "fundamentals", "culture", "principles"],
+        prerequisites: [],
       },
       {
+        id: this.getNextId(),
         title: "Infrastructure as Code (IaC)",
         slug: "infrastructure-as-code",
         description: "Learn to manage infrastructure through code with Terraform, CloudFormation, and best practices",
@@ -222,7 +219,7 @@ resource "aws_vpc" "main" {
 
 # Create a subnet
 resource "aws_subnet" "public" {
-  vpc_id       = aws_vpc.main.id
+  vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.1.0/24"
 
   tags = {
@@ -257,7 +254,7 @@ resource "aws_subnet" "public" {
         icon: "fas fa-server",
         level: "intermediate",
         readTime: 45,
-        learnerCount: 2847, // Explicitly set
+        learnerCount: 2847,
         learningPathId: intermediatePath.id,
         order: 1,
         objectives: [
@@ -266,10 +263,11 @@ resource "aws_subnet" "public" {
           "Implement state management and remote backends",
           "Apply IaC best practices in real-world scenarios"
         ],
-        tags: ["iac", "terraform", "aws", "infrastructure", "automation"], // Explicitly set
-        prerequisites: ["devops-fundamentals"], // Explicitly set
+        tags: ["iac", "terraform", "aws", "infrastructure", "automation"],
+        prerequisites: ["devops-fundamentals"],
       },
       {
+        id: this.getNextId(),
         title: "Containerization with Docker",
         slug: "containerization-docker",
         description: "Master container technology, Docker fundamentals, and container orchestration",
@@ -342,6 +340,9 @@ COPY package*.json ./
 
 # Install dependencies
 RUN npm ci --only=production
+
+# Copy application code
+COPY . .
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -424,7 +425,7 @@ volumes:
         icon: "fab fa-docker",
         level: "intermediate",
         readTime: 40,
-        learnerCount: 3156, // Explicitly set
+        learnerCount: 3156,
         learningPathId: intermediatePath.id,
         order: 2,
         objectives: [
@@ -433,31 +434,19 @@ volumes:
           "Implement Docker Compose for multi-container applications",
           "Apply container security and optimization best practices"
         ],
-        tags: ["docker", "containers", "containerization", "devops"], // Explicitly set
-        prerequisites: ["devops-fundamentals"], // Explicitly set
+        tags: ["docker", "containers", "containerization", "devops"],
+        prerequisites: ["devops-fundamentals"],
       }
     ];
 
-    topicsData.forEach(t => {
-      const id = this.getNextId();
-      const topic: Topic = {
-        ...t,
-        id,
-        learnerCount: t.learnerCount ?? 0,
-        tags: (t.tags as string[] | null) ?? null,
-        prerequisites: (t.prerequisites as string[] | null) ?? null,
-        learningPathId: t.learningPathId ?? null,
-        objectives: t.objectives as string[], // FIXED: Explicitly cast objectives here
-      };
-      this.topics.set(topic.id, topic);
+    topics.forEach(topic => {
+      this.topics.set(topic.id, topic as Topic);
     });
 
     // Seed code snippets
-    const snippetsData: (Omit<CodeSnippet, 'id' | 'description'> & {
-      id?: number;
-      description?: string | null;
-    })[] = [
+    const snippets = [
       {
+        id: this.getNextId(),
         topicId: 2, // Infrastructure as Code
         title: "Basic Terraform Configuration",
         language: "hcl",
@@ -483,10 +472,11 @@ resource "aws_vpc" "main" {
     Name = "Main VPC"
   }
 }`,
-        description: "A simple Terraform configuration to create an AWS VPC", // Explicitly set
+        description: "A simple Terraform configuration to create an AWS VPC",
         order: 1,
       },
       {
+        id: this.getNextId(),
         topicId: 3, // Docker
         title: "Node.js Dockerfile",
         language: "dockerfile",
@@ -507,19 +497,13 @@ USER nextjs
 EXPOSE 3000
 
 CMD ["npm", "start"]`,
-        description: "Production-ready Dockerfile for a Node.js application", // Explicitly set
+        description: "Production-ready Dockerfile for a Node.js application",
         order: 1,
       }
     ];
 
-    snippetsData.forEach(s => {
-      const id = this.getNextId();
-      const snippet: CodeSnippet = {
-        ...s,
-        id,
-        description: s.description ?? null, // Ensure it's string or null, not undefined
-      };
-      this.codeSnippets.set(snippet.id, snippet);
+    snippets.forEach(snippet => {
+      this.codeSnippets.set(snippet.id, snippet as CodeSnippet);
     });
   }
 
@@ -533,10 +517,10 @@ CMD ["npm", "start"]`,
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.getNextId();
-    const user: User = {
-      ...insertUser,
-      id,
-      createdAt: new Date()
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      createdAt: new Date() 
     };
     this.users.set(id, user);
     return user;
@@ -609,26 +593,17 @@ CMD ["npm", "start"]`,
 
   async createTopic(topic: InsertTopic): Promise<Topic> {
     const id = this.getNextId();
-    // Ensure all nullable properties are explicitly null if not provided
-    const newTopic: Topic = {
-      ...topic,
-      id,
-      learnerCount: topic.learnerCount ?? null,
-      tags: (topic.tags as string[] | null) ?? null,
-      prerequisites: (topic.prerequisites as string[] | null) ?? null,
-      learningPathId: topic.learningPathId ?? null,
-      objectives: topic.objectives as string[], // FIXED: Explicitly cast objectives here
-    };
+    const newTopic: Topic = { ...topic, id };
     this.topics.set(id, newTopic);
     return newTopic;
   }
 
   async searchTopics(query: string): Promise<Topic[]> {
     const lowercaseQuery = query.toLowerCase();
-    return Array.from(this.topics.values()).filter(topic =>
+    return Array.from(this.topics.values()).filter(topic => 
       topic.title.toLowerCase().includes(lowercaseQuery) ||
       topic.description.toLowerCase().includes(lowercaseQuery) ||
-      (topic.tags !== null && topic.tags.some((tag: string) => tag.toLowerCase().includes(lowercaseQuery)))
+      topic.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
     );
   }
 
@@ -640,15 +615,13 @@ CMD ["npm", "start"]`,
   async updateUserProgress(progress: InsertUserProgress): Promise<UserProgress> {
     const key = `${progress.userId}-${progress.topicId}`;
     const existing = this.userProgress.get(key);
-
+    
     const updatedProgress: UserProgress = {
       id: existing?.id || this.getNextId(),
       ...progress,
-      completed: progress.completed ?? null,
-      progressPercentage: progress.progressPercentage ?? null,
       lastAccessed: new Date(),
     };
-
+    
     this.userProgress.set(key, updatedProgress);
     return updatedProgress;
   }
@@ -656,14 +629,14 @@ CMD ["npm", "start"]`,
   async getUserProgressByPath(userId: number, pathId: number): Promise<UserProgress[]> {
     const pathTopics = Array.from(this.topics.values()).filter(t => t.learningPathId === pathId);
     const result: UserProgress[] = [];
-
+    
     for (const topic of pathTopics) {
       const progress = await this.getUserProgress(userId, topic.id);
       if (progress) {
         result.push(progress);
       }
     }
-
+    
     return result;
   }
 
@@ -675,11 +648,7 @@ CMD ["npm", "start"]`,
 
   async createCodeSnippet(snippet: InsertCodeSnippet): Promise<CodeSnippet> {
     const id = this.getNextId();
-    const newSnippet: CodeSnippet = {
-      ...snippet,
-      id,
-      description: snippet.description ?? null,
-    };
+    const newSnippet: CodeSnippet = { ...snippet, id };
     this.codeSnippets.set(id, newSnippet);
     return newSnippet;
   }
