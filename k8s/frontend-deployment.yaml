@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: muhammadwaqas366/devops-client:latest
+        image: muhammadwaqas366/frontend-deployment:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80 # <--- CHANGE THIS TO 80 (Nginx port)
